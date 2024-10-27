@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="author" content="James M.">
+    <title>Conditional Circuit Switch</title>
+	<>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            background-color: white;
+            margin: 0;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .circuit {
+            width: 100px;
+            height: 100px;
+            background-color: lightgray;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: dimgray;
+            font-weight: bold;
+            font-size: 1.5em;
+            cursor: pointer;
+            position: absolute;
+            transition: background-color 0.3s;
+        }
+        .circuit.on {
+            background-color: limegreen;
+            color: white;
+        }
+        .slider {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 30px;
+            background-color: lightgray;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .slider.on {
+            background-color: limegreen;
+        }
+        .slider.semi-connected {
+            background-color: yellow;
+        }
+        .slider:before {
+            content: "";
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            background-color: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+        }
+        .slider.on:before {
+            transform: translateX(30px);
+        }
+    </style>
+</head>
+<body>
+    <div class="circuit" id="circuit1" style="top: 200px; left: 300px;">Off</div>
+    <div class="circuit" id="circuit2" style="top: 300px; left: 300px;">Off</div>
+    <div class="circuit" id="circuit3" style="top: 400px; left: 300px;">Off</div>
+    <div class="slider" id="switch"></div>
+    <div class="circuit" id="circuit4" style="top: 200px; left: 700px;">Off</div>
+    <div class="circuit" id="circuit5" style="top: 400px; left: 700px;">Off</div>
+
+    <script>
+        const circuits = [
+            document.getElementById("circuit1"),
+            document.getElementById("circuit2"),
+            document.getElementById("circuit3"),
+            document.getElementById("circuit4"),
+            document.getElementById("circuit5")
+        ];
+        const switchButton = document.getElementById("switch");
+
+        let draggedCircuit = null;
+        let offsetX = 0, offsetY = 0;
+
+        circuits.forEach(circuit => {
+            circuit.addEventListener('mousedown', (e) => {
+                draggedCircuit = circuit;
+                offsetX = e.clientX - circuit.getBoundingClientRect().left;
+                offsetY = e.clientY - circuit.getBoundingClientRect().top;
+                circuit.style.zIndex = 1000;
+            });
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (draggedCircuit) {
+                draggedCircuit.style.left = `${e.clientX - offsetX}px`;
+                draggedCircuit.style.top = `${e.clientY - offsetY}px`;
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (draggedCircuit) {
+                draggedCircuit.style.zIndex = '';
+                draggedCircuit = null;
+                updateSwitch(); 
+            }
+        });
+
+        function updateSwitch() {
+            const switchCenter = switchButton.getBoundingClientRect().left + switchButton.offsetWidth / 2;
+
+            let leftCount = 0, rightCount = 0;
+            circuits.forEach(circuit => {
+                const circuitCenter = circuit.getBoundingClientRect().left + circuit.offsetWidth / 2;
+                if (circuit.classList.contains("on")) {
+                    if (circuitCenter < switchCenter) {
+                        leftCount++;
+                    } else {
+                        rightCount++;
+                    }
+                }
+            });
+
+            if ((leftCount >= 2 && rightCount >= 2) || (leftCount === 3 && rightCount === 2) || (leftCount === 2 && rightCount === 3)) {
+                switchButton.classList.add("on");
+                switchButton.classList.remove("semi-connected");
+            } else if (leftCount === 1 && rightCount === 1) {
+                switchButton.classList.add("semi-connected");
+                switchButton.classList.remove("on");
+            } else {
+                switchButton.classList.remove("on");
+                switchButton.classList.remove("semi-connected");
+            }
+        }
+
+        function toggleCircuit(circuit) {
+            circuit.classList.toggle("on");
+            circuit.textContent = circuit.classList.contains("on") ? "On" : "Off";
+            updateSwitch();
+        }
+
+        function toggleAllCircuits() {
+            const isOn = !switchButton.classList.contains("on");
+            circuits.forEach(circuit => {
+                circuit.classList.toggle("on", isOn);
+                circuit.textContent = isOn ? "On" : "Off";
+            });
+            updateSwitch();
+        }
+
+        circuits.forEach(circuit => circuit.addEventListener("click", () => toggleCircuit(circuit)));
+        switchButton.addEventListener("click", toggleAllCircuits); 
+
+        updateSwitch();
+    </script>
+</body>
+</html>
+
+
